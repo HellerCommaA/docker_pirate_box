@@ -1,98 +1,109 @@
-
+version: "3.3" 
 services:
-  plex:
-    image: linuxserver/plex
-    container_name: plex
-    restart: always
-    volumes:
-      - ${ROOT}/configs/plex:/config
-      - ${ROOT}/media/movies:/data/movies
-      - ${ROOT}/media/tv:/data/tvshows
-      - ${ROOT}/media/racing:/data/racing
-      - ${ROOT}/media/transcode:/data/transcode
-    network_mode: host
-    environment:
-      - VERSION=latest
-      - TZ=America/New_York
-  sabnzbd:
-    image: linuxserver/sabnzbd
-    ports:
-      - 8080:8080
-    volumes:
-      - ${ROOT}/configs/sabnzbd:/config
-      - ${ROOT}/data/usenet:/downloads
-      - ${ROOT}/data/usenet/incomplete:/incomplete-downloads
-    environment:
-      - TZ=America/New_York
-  qbittorrent:
-    image: linuxserver/qbittorrent
-    container_name: qbittorrent
-    restart: always
-    depends_on:
-      - sabnzbd
-    ports:
-      - "6881:6881/tcp"
-      - "6881:6881/udp"
-    volumes:
-      - ${ROOT}/data/torrents:/data
-      - ${ROOT}/data/torrents/logs:/var/log/qbittorrent
-    environment:
-      - TZ=America/New_York
-  sonarr:
-    image: linuxserver/sonarr
-    container_name: sonarr
-    restart: always
-    depends_on:
-      - sabnzbd
-    volumes:
-      - ${ROOT}/configs/sonarr:/config
-      - ${ROOT}/data/usenet:/downloads
-      - ${ROOT}/media/tv:/tv
-    environment:
-      - TZ=America/New_York
-    ports:
-      - 8989:8989
-  radarr:
-    image: linuxserver/radarr
-    container_name: radarr
-    restart: always
-    depends_on:
-      - sabnzbd
-    volumes:
-      - ${ROOT}/configs/radarr:/config
-      - ${ROOT}/data/usenet:/downloads
-      - ${ROOT}/media/movies:/movies
-    environment:
-      - TZ=America/New_York
-    ports:
-      - 7878:7878
   overseerr:
-    image: sctx/overseerr:latest
     container_name: overseerr
     restart: always
+    network_mode: host
     environment:
       - LOG_LEVEL=info
       - TZ=America/New_York
+    image: sctx/overseerr:latest
     ports:
-      - 5055:5055
+      - "5055:5055"
     volumes:
-      - ${ROOT}/configs/overseerr:/app/config
+      - /mnt/bigpool/big/configs/overseerr:/app/config
+  plex:
+    container_name: plex
+    environment:
+      - VERSION=latest
+      - TZ=America/New_York
+    image: linuxserver/plex
+    network_mode: host
+    restart: always
+    ports:
+      - "32400:32400"
+    volumes:
+      - /mnt/bigpool/big/configs/plex:/config
+      - /mnt/bigpool/big/media/movies:/data/movies
+      - /mnt/bigpool/big/media/tv:/data/tvshows
+      - /mnt/bigpool/big/media/racing:/data/racing
+      - /mnt/bigpool/big/media/transcode:/data/transcode
   portainer:
-    image: portainer/portainer
     container_name: portainer
-    restart: always
+    environment:
+      - TZ=America/New_York
+    image: portainer/portainer
     ports:
-      - 9000:9000
-    environment:
-      - TZ=America/New_York
-    volumes:
-      - ${ROOT}/data/portainer:/data
-      - /var/run/docker.sock:/var/run/docker.sock
-  watchtower:
-    image: v2tec/watchtower
-    container_name: watchtower
+      - "9000:9000"
     restart: always
+    network_mode: host
+    volumes:
+      - /mnt/bigpool/big/data/portainer:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+  # qbittorrent:
+  #   container_name: qbittorrent
+  #   depends_on:
+  #     - sabnzbd
+  #   environment:
+  #     - TZ=America/New_York
+  #   image: linuxserver/qbittorrent
+  #   ports:
+  #     - "6881:6881/tcp"
+  #     - "6881:6881/udp"
+  #   restart: always
+  #   network_mode: host
+  #   volumes:
+  #     - /mnt/bigpool/big/data/torrents:/data
+  #     - /mnt/bigpool/big/data/torrents/logs:/var/log/qbittorrent
+  radarr:
+    container_name: radarr
+    depends_on:
+      - sabnzbd
     environment:
       - TZ=America/New_York
+    image: linuxserver/radarr
+    ports:
+      - "7878:7878"
+    restart: always
+    network_mode: host
+    volumes:
+      - /mnt/bigpool/big/configs/radarr:/config
+      - /mnt/bigpool/big/data/usenet:/downloads
+      - /mnt/bigpool/big/media/movies:/movies
+  sabnzbd:
+    container_name: sabnzbd
+    restart: always
+    network_mode: host
+    environment:
+      - TZ=America/New_York
+    image: linuxserver/sabnzbd
+    ports:
+      - "8080:8080"
+    volumes:
+      - /mnt/bigpool/big/configs/sabnzbd:/config
+      - /mnt/bigpool/big/data/usenet:/downloads
+      - /mnt/bigpool/big/data/usenet/incomplete:/incomplete-downloads
+  sonarr:
+    container_name: sonarr
+    depends_on:
+      - sabnzbd
+    environment:
+      - TZ=America/New_York
+    image: linuxserver/sonarr
+    ports:
+      - "8989:8989"
+    restart: always
+    network_mode: host
+    volumes:
+      - /mnt/bigpool/big/configs/sonarr:/config
+      - /mnt/bigpool/big/data/usenet:/downloads
+      - /mnt/bigpool/big/media/tv:/tv
+  watchtower:
+    container_name: watchtower
+    environment:
+      - TZ=America/New_York
+    image: v2tec/watchtower
+    restart: always
+    network_mode: host
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
